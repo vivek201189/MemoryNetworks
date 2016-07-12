@@ -18,7 +18,6 @@ def tokenize(sent):
     '''
     return [x.strip() for x in re.split('(\W+)?', sent) if x.strip()]
 
-
 def parse_stories(lines, only_supporting=False):
     '''Parse stories provided in the bAbi tasks format
     If only_supporting is true, only the sentences that support the answer are kept.
@@ -49,7 +48,6 @@ def parse_stories(lines, only_supporting=False):
             story.append(sent)
     return data
 
-
 def get_stories(f, only_supporting=False, max_length=None):
     '''Given a file name, read the file, retrieve the stories, and then convert the sentences into a single story.
     If max_length is supplied, any stories longer than max_length tokens will be discarded.
@@ -59,7 +57,6 @@ def get_stories(f, only_supporting=False, max_length=None):
     data = [(flatten(story), q, answer) for story, q, answer in data if not max_length or len(flatten(story)) < max_length]
     return data
 
-
 def vectorize_stories(data, word_idx, story_maxlen, query_maxlen):
     X = []
     Xq = []
@@ -67,7 +64,7 @@ def vectorize_stories(data, word_idx, story_maxlen, query_maxlen):
     for story, query, answer in data:
         x = [word_idx[w] for w in story]
         xq = [word_idx[w] for w in query]
-        y = np.zeros(len(word_idx) + 1)  # let's not forget that index 0 is reserved
+        y = np.zeros(len(word_idx) + 1)  #index 0 reserved
         y[word_idx[answer]] = 1
         X.append(x)
         Xq.append(xq)
@@ -76,8 +73,7 @@ def vectorize_stories(data, word_idx, story_maxlen, query_maxlen):
             pad_sequences(Xq, maxlen=query_maxlen), np.array(Y))
 
 
-path = get_file('babi-tasks-v1-2.tar.gz',
-                origin='http://www.thespermwhale.com/jaseweston/babi/tasks_1-20_v1-2.tar.gz')
+path = get_file('tasks_1-20_v1-2.tar.gz')
 tar = tarfile.open(path)
 
 challenges = {
@@ -99,36 +95,9 @@ vocab_size = len(vocab) + 1
 story_maxlen = max(map(len, (x for x, _, _ in train_stories + test_stories)))
 query_maxlen = max(map(len, (x for _, x, _ in train_stories + test_stories)))
 
-print('-')
-print('Vocab size:', vocab_size, 'unique words')
-print('Story max length:', story_maxlen, 'words')
-print('Query max length:', query_maxlen, 'words')
-print('Number of training stories:', len(train_stories))
-print('Number of test stories:', len(test_stories))
-print('-')
-print('Here\'s what a "story" tuple looks like (input, query, answer):')
-print(train_stories[0])
-print('-')
-print('Vectorizing the word sequences...')
-
 word_idx = dict((c, i + 1) for i, c in enumerate(vocab))
 inputs_train, queries_train, answers_train = vectorize_stories(train_stories, word_idx, story_maxlen, query_maxlen)
 inputs_test, queries_test, answers_test = vectorize_stories(test_stories, word_idx, story_maxlen, query_maxlen)
-
-print('-')
-print('inputs: integer tensor of shape (samples, max_length)')
-print('inputs_train shape:', inputs_train.shape)
-print('inputs_test shape:', inputs_test.shape)
-print('-')
-print('queries: integer tensor of shape (samples, max_length)')
-print('queries_train shape:', queries_train.shape)
-print('queries_test shape:', queries_test.shape)
-print('-')
-print('answers: binary (1 or 0) tensor of shape (samples, vocab_size)')
-print('answers_train shape:', answers_train.shape)
-print('answers_test shape:', answers_test.shape)
-print('-')
-print('Compiling...')
 
 #Implementation of deep long-short term recurrent neural network begins here
 
